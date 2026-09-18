@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@mONSEY | guns.lol</title>
+  <meta name="description" content="Ave Christus Rex ✝" />
+  <meta property="og:title" content="@mONSEY | guns.lol" />
+  <meta property="og:description" content="Ave Christus Rex ✝" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/jpeg" href="assets/avatar.jpg" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Fixed Background Layers -->
+  <video id="bgVideo" class="bg-video-layer" autoplay loop muted playsinline preload="auto" poster="assets/gengar_bg.jpg">
+    <source src="assets/ykz.mp4" type="video/mp4" />
+  </video>
+  <div id="shapeWavesBg" class="shape-waves-bg-container"></div>
+  <div class="bg-vignette-layer"></div>
+
+  <!-- Click to Enter Overlay -->
+  <div id="clickOverlay" class="click-overlay">
+    <div class="click-overlay-text">click to enter...</div>
+  </div>
+
+  <!-- Top-Left Expandable Volume Widget -->
+  <div id="volumeWidget" class="volume-widget">
+    <button id="volumeToggleBtn" class="volume-btn" aria-label="Toggle Mute" data-tooltip="Toggle Mute">
+      <!-- Speaker High SVG -->
+      <svg id="speakerIcon" class="icon-svg" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48">
+        <defs>
+          <mask id="volMask">
+            <g fill="none" stroke="#fff" stroke-width="4">
+              <path fill="#555" stroke-linejoin="round" d="M24 6v36c-7 0-12.2-9.16-12.2-9.16H6a2 2 0 0 1-2-2V17a2 2 0 0 1 2-2h5.8S17 6 24 6Z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M32 15a11.91 11.91 0 0 1 1.68 1.86A12.07 12.07 0 0 1 36 24c0 2.65-.85 5.1-2.28 7.09A11.94 11.94 0 0 1 32 33"/>
+              <path stroke-linecap="round" d="M34.24 41.19C40.08 37.7 44 31.3 44 24c0-7.2-3.8-13.5-9.49-17.02"/>
+            </g>
+          </mask>
+        </defs>
+        <path fill="currentColor" d="M0 0h48v48H0z" mask="url(#volMask)"/>
+      </svg>
+    </button>
+    <div id="wakeSliderMount" class="volume-slider-container"></div>
+  </div>
+
+  <!-- Main Profile Center Viewport -->
+  <main class="page-container">
+    <div class="profile-tilt-wrapper" id="profileTiltWrapper">
+      <div class="profile-card initial-hidden discord-theme-card" id="profileCard">
+        
+        <!-- Starry Night Gengar Banner -->
+        <div class="card-banner-wrapper">
+          <img id="cardBanner" src="assets/banner.jpg" alt="Banner" class="card-banner-img" />
+          <div class="banner-gradient-overlay"></div>
+        </div>
+
+        <!-- Avatar Row -->
+        <div class="card-header-row">
+          <div class="avatar-wrapper">
+            <img id="profileAvatar" src="assets/avatar.jpg" alt="Avatar" class="avatar-img" />
+            <div class="avatar-status-badge" title="Offline / Invisible">
+              <span class="status-inner-dot"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Body Content -->
+        <div class="card-body">
+          <!-- Username & Status Icon -->
+          <div class="username-row">
+            <div class="username-wrapper" data-tooltip="UID 1,885,751">
+              <div id="scrambledUsername"></div>
+            </div>
+            <span class="user-status-icon" data-tooltip="Night Owl">
+              <svg xmlns="http://www.w3.org/2000/svg" width="1.15em" height="1.15em" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26a5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/>
+              </svg>
+            </span>
+          </div>
+
+          <!-- Handle, Pronouns & Guild Badge -->
+          <div class="handle-row">
+            <span class="handle-text" id="userHandle">moykz_</span>
+            <span class="handle-bullet">•</span>
+            <span class="pronouns-text" id="userPronouns">Amen/Crusader</span>
+            <div class="guild-badge" id="guildBadge" data-tooltip="Clan: AMEN">
+              <span class="guild-icon">🛡️</span>
+              <span class="guild-name">AMEN</span>
+            </div>
+          </div>
+
+          <!-- Bio / About Me Box -->
+          <div class="bio-section">
+            <h4 class="bio-title" id="bioTitle">Ave Christus Rex ✝</h4>
+            <p class="bio-details" id="bioDetails">23 | 🇯🇵</p>
+          </div>
+
+          <!-- Divider -->
+          <div class="card-divider"></div>
+
+          <!-- Social Icons Row -->
+          <div class="socials-row" id="socialsRow"></div>
+
+          <!-- iOS Theme Song Player Card -->
+          <div class="ios-player-card" id="audioPlayerCard">
+            <div class="ios-player-top">
+              <img id="audioCover" src="assets/ultraviolence_cover.jpg" alt="Cover" class="ios-cover" />
+              <div class="ios-track-info">
+                <span class="ios-track-title" id="audioTitle">Ultraviolence</span>
+                <span class="ios-track-artist">Lana Del Rey</span>
+              </div>
+              <div class="ios-airplay-badge" data-tooltip="Now Playing">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3a9 9 0 0 0-9 9c0 3.87 2.45 7.18 5.91 8.44l.87-1.8A7.012 7.012 0 0 1 5 12a7 7 0 1 1 14 0c0 2.92-1.78 5.42-4.32 6.5l.84 1.83C19.23 18.94 21 15.68 21 12a9 9 0 0 0-9-9zm0 5a4 4 0 0 0-4 4c0 1.63.98 3.03 2.39 3.65l.79-1.86A2.006 2.006 0 0 1 10 12a2 2 0 1 1 4 0c0 .73-.39 1.36-.97 1.71l.85 1.83A4.004 4.004 0 0 0 16 12a4 4 0 0 0-4-4zm-1.5 8h3v5h-3z"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- iOS Scrubber Row -->
+            <div class="ios-scrubber-row">
+              <div class="ios-progress-container" id="progressBarContainer">
+                <div class="ios-progress-track">
+                  <div class="ios-progress-fill" id="progressFill" style="width: 0%"></div>
+                  <div class="ios-progress-thumb" id="progressThumb" style="left: 0%"></div>
+                </div>
+              </div>
+              <div class="ios-time-row">
+                <span id="audioCurrentTime" class="ios-time">0:00</span>
+                <span id="audioDuration" class="ios-time">-4:11</span>
+              </div>
+            </div>
+
+            <!-- iOS Playback Controls -->
+            <div class="ios-controls-row">
+              <button id="skipBackBtn" class="ios-ctrl-btn" aria-label="Restart Audio">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                  <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                </svg>
+              </button>
+              <button id="playPauseBtn" class="ios-ctrl-btn ios-play-btn" aria-label="Play or Pause">
+                <svg id="playIcon" class="play-svg" viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                  <path d="M8 5.14v14.72a1 1 0 0 0 1.5.86l11.5-7.36a1 1 0 0 0 0-1.72L9.5 4.28A1 1 0 0 0 8 5.14z"/>
+                </svg>
+                <svg id="pauseIcon" class="pause-svg" viewBox="0 0 24 24" width="28" height="28" fill="currentColor" style="display: none;">
+                  <path d="M6 5a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5zm7 0a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2V5z"/>
+                </svg>
+              </button>
+              <button id="skipForwardBtn" class="ios-ctrl-btn" aria-label="Skip Forward">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                  <path d="m6 18l8.5-6L6 6v12zm10-12v12h2V6h-2z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom-Left Real-Time iOS Views Counter Widget -->
+  <div class="ios-views-widget" id="viewsWidget" data-tooltip="Live Profile Views">
+    <div class="ios-views-pill">
+      <span class="ios-live-indicator">
+        <span class="live-pulse"></span>
+        <span class="live-core"></span>
+      </span>
+      <svg class="ios-eye-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+      </svg>
+      <span class="ios-view-number" id="profileViewCount">2,847</span>
+    </div>
+  </div>
+
+  <!-- Dynamic Floating Tooltip Element -->
+  <div id="floatingTooltip" class="floating-tooltip"></div>
+
+  <!-- Audio Element -->
+  <audio id="bgAudio" preload="auto" loop src="assets/ultraviolence.m4a"></audio>
+
+  <!-- Application Logic -->
+  <script type="module" src="/bg.tsx"></script>
+  <script type="module" src="/script.js"></script>
+</body>
+</html>

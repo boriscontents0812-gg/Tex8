@@ -1,0 +1,25 @@
+.text-block {
+  margin: 0;
+  font-family: inherit;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+  display: inline-block;
+  user-select: none;
+  cursor: default;
+}
+
+.text-block p {
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.char {
+  will-change: transform;
+  display: inline-block;
+  min-width: 0.35em;
+  text-align: center;
+}
