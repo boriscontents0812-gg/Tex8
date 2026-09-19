@@ -391,7 +391,7 @@ volumeToggleBtn.addEventListener('click', (e) => {
 });
 
 // Animated Browser Tab Title
-const fullTitle = `@${profileConfig.username} | guns.lol`;
+const fullTitle = 'mONSEY Official';
 let titleIndex = 0;
 let titleDirection = 1;
 

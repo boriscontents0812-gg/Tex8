@@ -1,6 +1,6 @@
-# thecosmic | guns.lol Bio-Link Website
+# mONSEY Official
 
-A responsive, pixel-perfect clone of the **guns.lol/thecosmic** profile page, reverse-engineered with authentic styling, glassmorphism, media controls, and canvas shaders.
+A responsive profile page with authentic styling, glassmorphism, media controls, and canvas shaders.
 
 ## Features
 
