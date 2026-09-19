@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import {
-  Settings02Icon,
-  PaintBoardIcon,
-  TextFontIcon,
-  Layers01Icon,
-  Notification03Icon
-} from '@hugeicons/core-free-icons';
+  Settings,
+  Palette,
+  Type,
+  Layers,
+  Volume2,
+  Sparkles,
+  Video
+} from 'lucide-react';
 
 import BranchedMenu from '../ui/BranchedMenu';
 import WakeSlider from '../ui/WakeSlider';
 import SquishSwitch from '../ui/SquishSwitch';
 import SpecularButton from '../ui/SpecularButton';
-import { Sparkles, Video } from 'lucide-react';
 
 export default function RightSidebar({
   platform = 'ios',
@@ -31,31 +32,31 @@ export default function RightSidebar({
     {
       label: 'Settings',
       children: [
-        { value: 'settings', label: 'Position & Size', icon: Settings02Icon }
+        { value: 'settings', label: 'Position & Size', icon: Settings }
       ]
     },
     {
       label: 'Voices',
       children: [
-        { value: 'voices', label: 'Voice & Speech', icon: Notification03Icon }
+        { value: 'voices', label: 'Voice & Speech', icon: Volume2 }
       ]
     },
     {
       label: 'Bubble Design',
       children: [
-        { value: 'bubble', label: 'Scale & Density', icon: TextFontIcon }
+        { value: 'bubble', label: 'Scale & Density', icon: Type }
       ]
     },
     {
       label: 'Header',
       children: [
-        { value: 'header', label: 'Avatar & Elements', icon: Layers01Icon }
+        { value: 'header', label: 'Avatar & Elements', icon: Layers }
       ]
     },
     {
       label: 'Video',
       children: [
-        { value: 'video', label: 'Effects & Background', icon: PaintBoardIcon }
+        { value: 'video', label: 'Effects & Background', icon: Palette }
       ]
     }
   ];

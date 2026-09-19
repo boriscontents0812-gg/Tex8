@@ -1,41 +1,47 @@
-import { isValidElement, useLayoutEffect, useRef, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import React, { isValidElement, useLayoutEffect, useRef, useState } from 'react';
 import {
-  CursorPointer01Icon,
-  Download04Icon,
-  Layers01Icon,
-  Notification03Icon,
-  PaintBoardIcon,
-  Rocket01Icon,
-  Settings02Icon,
-  TextFontIcon
-} from '@hugeicons/core-free-icons';
+  MousePointer,
+  Download,
+  Layers,
+  Bell,
+  Palette,
+  Rocket,
+  Settings,
+  Type
+} from 'lucide-react';
 import './BranchedMenu.css';
 
 const DEFAULT_ITEMS = [
   {
     label: 'Getting started',
     children: [
-      { value: 'install', label: 'Installation', icon: Download04Icon },
-      { value: 'quick', label: 'Quick start', icon: Rocket01Icon },
-      { value: 'config', label: 'Configuration', icon: Settings02Icon },
-      { value: 'theming', label: 'Theming', icon: PaintBoardIcon }
+      { value: 'install', label: 'Installation', icon: Download },
+      { value: 'quick', label: 'Quick start', icon: Rocket },
+      { value: 'config', label: 'Configuration', icon: Settings },
+      { value: 'theming', label: 'Theming', icon: Palette }
     ]
   },
   {
     label: 'Components',
     children: [
-      { value: 'buttons', label: 'Buttons', icon: CursorPointer01Icon },
-      { value: 'typography', label: 'Typography', icon: TextFontIcon },
-      { value: 'overlays', label: 'Overlays', icon: Layers01Icon },
-      { value: 'toasts', label: 'Toasts', icon: Notification03Icon }
+      { value: 'buttons', label: 'Buttons', icon: MousePointer },
+      { value: 'typography', label: 'Typography', icon: Type },
+      { value: 'overlays', label: 'Overlays', icon: Layers },
+      { value: 'toasts', label: 'Toasts', icon: Bell }
     ]
   }
 ];
 const PAD = 6;
 const MARK = 16;
 
-const renderIcon = icon => (isValidElement(icon) ? icon : <HugeiconsIcon icon={icon} size={16} strokeWidth={1.8} />);
+const renderIcon = icon => {
+  if (isValidElement(icon)) return icon;
+  if (typeof icon === 'function' || typeof icon === 'object') {
+    const IconComponent = icon;
+    return <IconComponent size={16} strokeWidth={1.8} />;
+  }
+  return null;
+};
 const toSet = open => new Set(Array.isArray(open) ? open : open >= 0 ? [open] : []);
 
 export default function BranchedMenu({

@@ -1,19 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  CommandLineIcon,
-  File02Icon,
-  PencilEdit01Icon,
-  RefreshIcon,
-  Search01Icon,
-  Tick02Icon
-} from '@hugeicons/core-free-icons';
+  Terminal,
+  FileText,
+  Pencil,
+  RefreshCw,
+  Search,
+  Check
+} from 'lucide-react';
 
 import './CallChip.css';
 
 const HOLD_AT = 0.9;
 const SHAKE = [0, -1, 1, -0.66, 0.66, -0.33, 0];
-const ICONS = { terminal: CommandLineIcon, file: File02Icon, search: Search01Icon, edit: PencilEdit01Icon };
+const ICONS = { terminal: Terminal, file: FileText, search: Search, edit: Pencil };
 const WORDS = { running: 'running', done: 'done', error: 'failed', idle: 'queued' };
 
 const fmt = ms => (ms < 10000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`);
@@ -172,13 +171,16 @@ export default function CallChip({
       <span ref={fillRef} className="call-chip__fill" aria-hidden="true" />
       <span className="call-chip__slot" aria-hidden="true">
         <span className="call-chip__glyph" data-state={glyphState('tool')}>
-          {toolIcon ? <HugeiconsIcon icon={toolIcon} size={iconSize} strokeWidth={1.8} /> : icon}
+          {toolIcon ? (() => {
+            const ToolComp = toolIcon;
+            return <ToolComp size={iconSize} strokeWidth={1.8} />;
+          })() : icon}
         </span>
         <span className="call-chip__glyph" data-state={glyphState('check')}>
-          <HugeiconsIcon icon={Tick02Icon} size={iconSize} strokeWidth={2.2} />
+          <Check size={iconSize} strokeWidth={2.2} />
         </span>
         <span className="call-chip__glyph" data-state={glyphState('retry')}>
-          <HugeiconsIcon icon={RefreshIcon} size={iconSize} strokeWidth={2} />
+          <RefreshCw size={iconSize} strokeWidth={2} />
         </span>
       </span>
       <span className="call-chip__name" aria-hidden="true">
