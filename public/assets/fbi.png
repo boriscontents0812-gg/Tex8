@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" rx="16" fill="#182234"/>
+  <rect x="15" y="15" width="370" height="270" rx="12" fill="#0d1420" stroke="#f59e0b" stroke-width="3"/>
+  <circle cx="200" cy="110" r="50" fill="#f59e0b" fill-opacity="0.1" stroke="#f59e0b" stroke-width="4"/>
+  <polygon points="200,75 212,100 240,103 218,122 225,148 200,133 175,148 182,122 160,103 188,100" fill="#f59e0b"/>
+  <text x="200" y="195" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="4">FBI WARNING</text>
+  <text x="200" y="230" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="16" font-weight="500" fill="#94a3b8" text-anchor="middle">FEDERAL BUREAU OF INVESTIGATION</text>
+  <text x="200" y="255" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="14" font-weight="600" fill="#ef4444" text-anchor="middle">OFFICIAL NOTICE</text>
+</svg>

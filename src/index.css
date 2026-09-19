@@ -1,0 +1,335 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #2b9de2;
+    color: #111827;
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Elegant Serif for Display Headlines */
+  .font-serif, h1, .anything-serif {
+    font-family: "Instrument Serif", Georgia, Cambria, serif;
+  }
+
+  /* Sleek select styling for Anything theme */
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.85rem center;
+    background-size: 14px 14px;
+    padding-right: 2.25rem !important;
+  }
+}
+
+/* Anything.com Frosted Glass & Surface Utilities */
+.anything-card {
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 16px 40px -12px rgba(10, 45, 75, 0.15), 0 2px 6px rgba(0, 0, 0, 0.04);
+  border-radius: 28px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .anything-card {
+  background: rgba(14, 20, 32, 0.88);
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.65), 0 2px 6px rgba(0, 0, 0, 0.3);
+  color: #e2e8f0;
+}
+
+.anything-card-inner {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05);
+  border-radius: 20px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .anything-card-inner {
+  background: #101624;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+.anything-input {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  color: #0f172a;
+  transition: all 0.18s ease;
+}
+.anything-input:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+}
+
+.dark .anything-input {
+  background: #0d131f;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+.dark .anything-input:focus {
+  border-color: #38CB00;
+  box-shadow: 0 0 0 3px rgba(56, 203, 0, 0.25);
+}
+
+
+/* Signature Anything.com Pill Buttons */
+.anything-pill-black {
+  background: #000000;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+.anything-pill-black:hover {
+  background: #262626;
+  transform: scale(1.02);
+}
+.anything-pill-black:active {
+  transform: scale(0.98);
+}
+
+.anything-pill-white {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.anything-pill-white:hover {
+  background: #f8fafc;
+  transform: scale(1.02);
+}
+.anything-pill-white:active {
+  transform: scale(0.98);
+}
+
+/* Atmospheric Horizon Sky Canvas */
+.anything-sky-bg {
+  background: linear-gradient(180deg, #2190db 0%, #3ca4e4 35%, #76c5f0 65%, #c8e7f8 90%, #eef7fc 100%);
+  background-attachment: fixed;
+}
+
+/* Soft neutral scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+/* Kree8 Studio Signature Pricing & Canvas Design System */
+.kree8-stage-card {
+  background: #efefef;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0px 1.67px 4.18px 0px rgba(183, 181, 203, 0.31),
+              0px 8.37px 8.37px 0px rgba(183, 181, 203, 0.27),
+              0px 17.57px 10.88px 0px rgba(183, 181, 203, 0.16),
+              0px 31.8px 12.55px 0px rgba(183, 181, 203, 0.05),
+              0px 50.21px 14.23px 0px rgba(183, 181, 203, 0.01);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .kree8-stage-card {
+  background: #111726;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0px 16px 40px rgba(0, 0, 0, 0.65), inset 0px 1px 1px rgba(255, 255, 255, 0.06);
+}
+
+.kree8-pill-active {
+  background-color: #f0f2f5;
+  color: #304F67;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0px 1.67px 4.18px 0px rgba(181, 186, 203, 0.31),
+              0px 17.57px 10.88px 0px rgba(181, 187, 203, 0.16),
+              inset 0px 7px 32px 0px rgb(255, 255, 255);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark .kree8-pill-active {
+  background-color: #1a2335;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.35), inset 0px 1px 1px rgba(255, 255, 255, 0.12);
+}
+
+.kree8-pill-inactive {
+  color: #456176;
+  border-radius: 50px;
+  border: 1px solid transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.kree8-pill-inactive:hover {
+  color: #304F67;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.dark .kree8-pill-inactive {
+  color: #94a3b8;
+}
+.dark .kree8-pill-inactive:hover {
+  color: #f8fafc;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.kree8-btn-primary {
+  background-color: #304F67;
+  color: #ffffff;
+  border-radius: 50px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px rgba(48, 79, 103, 0.25);
+}
+.kree8-btn-primary:hover {
+  background-color: #243c4e;
+  transform: scale(1.01);
+}
+.kree8-btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* ========================================================
+   Tex8 Brand Logo Shimmer & Hover Animation (from Kree8)
+   ======================================================== */
+.tex8-logo-wrap {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.tex8-logo-wrap:hover {
+  transform: scale(1.03);
+}
+
+.tex8-logo-text {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #304F67;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tex8-logo-wrap:hover .tex8-logo-text {
+  background: linear-gradient(90deg, #304F67 0%, #38CB00 28%, #A3E635 50%, #00FF88 72%, #304F67 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: tex8LogoShimmer 2.4s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(56, 203, 0, 0.45));
+}
+
+.tex8-msg-icon-svg {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: #304F67;
+}
+
+.tex8-logo-wrap:hover .tex8-msg-icon-svg {
+  color: #38CB00;
+  transform: scale(1.15) rotate(-8deg);
+  filter: drop-shadow(0 0 10px rgba(56, 203, 0, 0.65));
+}
+
+@keyframes tex8LogoShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 260% 50%;
+  }
+}
+
+/* ========================================================
+   Gengar Pop-Up Illustration Badge & Quote (like Kree8 lizard)
+   ======================================================== */
+.gengar-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 40%, #047857 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28), 0 1px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.gengar-badge-btn:hover {
+  transform: scale(1.22) translateY(-4px) rotate(-6deg);
+  box-shadow: 0 14px 28px rgba(124, 58, 237, 0.45), 0 0 18px rgba(56, 203, 0, 0.4);
+}
+
+.gengar-badge-btn:active {
+  transform: scale(1.1) translateY(-1px) rotate(-2deg);
+}
+
+@keyframes floatMusicNote1 {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6) rotate(0deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-16px) scale(1) rotate(-14deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-34px) scale(1.15) rotate(20deg);
+  }
+}
+
+@keyframes floatMusicNote2 {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6) rotate(0deg);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(-18px) scale(1.05) rotate(12deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px) scale(1.2) rotate(-18deg);
+  }
+}
+
+.gengar-note-1 {
+  animation: floatMusicNote1 1.8s ease-out infinite;
+}
+
+.gengar-note-2 {
+  animation: floatMusicNote2 2.1s ease-out 0.4s infinite;
+}
+
+
