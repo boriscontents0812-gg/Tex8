@@ -382,9 +382,9 @@ volumeToggleBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   if (bgAudio.muted || bgAudio.volume === 0) {
     bgAudio.muted = false;
-    bgAudio.volume = previousVolume > 0 ? previousVolume : 0.8;
+    bgAudio.volume = previousVolume > 0 ? previousVolume : (profileConfig.audio.defaultVolume || 0.15);
   } else {
-    previousVolume = bgAudio.volume > 0 ? bgAudio.volume : 0.8;
+    previousVolume = bgAudio.volume > 0 ? bgAudio.volume : (profileConfig.audio.defaultVolume || 0.15);
     bgAudio.muted = true;
   }
   updateVolumeIcon(bgAudio.muted ? 0 : bgAudio.volume);

@@ -65,7 +65,7 @@ const VolumeControl: React.FC = () => {
     if (audio) {
       return Math.round(audio.volume * 100);
     }
-    return 80;
+    return 15;
   });
 
   React.useEffect(() => {

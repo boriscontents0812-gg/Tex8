@@ -22,7 +22,7 @@ export const profileConfig = {
     src: 'assets/ultraviolence.m4a',
     cover: 'assets/ultraviolence_cover.jpg',
     autoplayOnEnter: true,
-    defaultVolume: 0.8
+    defaultVolume: 0.15
   },
 
   // Discord Badges
