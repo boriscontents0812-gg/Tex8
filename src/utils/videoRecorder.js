@@ -1,11 +1,12 @@
 /**
- * Video Rendering and Recording Pipeline
- * Faithfully replicates the exact video output of botsy.app (e.g. imessage_video - 2026-09-19T120609.890.mp4)
+ * Video Rendering and Recording Pipeline - High-Fidelity iMessage Engine
+ * Faithfully replicates the exact video output of reference iMessage videos
  * - 1080x1920 resolution at 60 FPS
- * - Pure #00FF00 chroma key green background
- * - Centered floating white card (810px width) with square/rounded corners
- * - iOS contact header: blue chevron <, avatar circle, contact name Laura❤️ >, FaceTime camera icon, divider line
- * - Authentic iMessage bubble tails on left and right messages
+ * - Pure #00FF00 chroma key green background (or dark slate if configured)
+ * - Centered floating white card (810px width) with square or rounded corners
+ * - Authentic iOS contact header: blue chevron <, avatar circle, contact name, FaceTime camera icon, divider
+ * - Authentic Apple iMessage SVG-accurate bezier tails (with iOS cluster rules)
+ * - Censored gaussian blur tape on {bracketed} words
  * - Synchronized pop and send sound effects + TTS voice clips
  * - Transcoded with FFmpeg to standard H.264/AAC MP4
  */
@@ -13,7 +14,7 @@
 export async function renderAndRecordVideo({
   scriptData,
   audioClips,
-  settings,
+  settings = {},
   platform = 'ios',
   theme = 'light',
   contactPhotos = {},
@@ -29,7 +30,7 @@ export async function renderAndRecordVideo({
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Preload images
+  // Preload script images
   const loadedImages = {};
   for (const [tag, url] of Object.entries(scriptImages)) {
     if (url) {
@@ -43,7 +44,7 @@ export async function renderAndRecordVideo({
     }
   }
 
-  // Preload avatar only if custom image is uploaded (avoid hardcoded Laura L fallback)
+  // Preload contact avatar image
   let avatarImg = null;
   const rawContactName = scriptData.contactName || 'Natasha 💖';
   const customPhoto = contactPhotos[rawContactName];
@@ -78,7 +79,7 @@ export async function renderAndRecordVideo({
   const sendBuffer = await loadAudioBuffer('/audio/send.wav');
 
   // Calculate message timelines
-  let currentTime = 0.35; // initial brief lead-in
+  let currentTime = 0.35; // initial lead-in
   const timeline = [];
   const messagesPerPage = settings.messagesPerPage || 4;
 
@@ -91,6 +92,7 @@ export async function renderAndRecordVideo({
     timeline.push({
       line,
       clip,
+      indexInScript: i,
       pageIndex,
       startTime: currentTime,
       duration,
@@ -101,11 +103,11 @@ export async function renderAndRecordVideo({
     currentTime += duration + (line.pauseAfter || 0.3);
   }
 
-  const totalDuration = currentTime + 0.6; // brief tail
+  const totalDuration = currentTime + 0.6; // brief trailing freeze
 
   // Schedule Audio Playback into Destination Stream
   timeline.forEach(item => {
-    // Message SFX (pop for 1, send for 2)
+    // Message SFX (pop for incoming 1, send for outgoing 2)
     const sfxBuffer = item.line.speaker === 1 ? popBuffer : sendBuffer;
     if (sfxBuffer && settings.notificationSound !== false) {
       const sfxSource = audioCtx.createBufferSource();
@@ -144,7 +146,7 @@ export async function renderAndRecordVideo({
 
   const recorder = new MediaRecorder(combinedStream, {
     mimeType,
-    videoBitsPerSecond: 8000000 // 8 Mbps
+    videoBitsPerSecond: 10000000 // 10 Mbps for ultra-crisp output
   });
 
   const recordedChunks = [];
@@ -197,16 +199,15 @@ export async function renderAndRecordVideo({
   }
 
   const result = await res.json();
-  onProgress(`Video ready! 0.0s - generated in ${totalDuration.toFixed(1)}s`);
+  onProgress(`Video ready! 1080x1920 MP4 generated.`);
   return result;
 }
 
 /**
- * Renders a single frame matching the exact visual style of:
- * imessage_video - 2026-09-19T120609.890.mp4
+ * Renders a single 1080x1920 frame matching the exact visual style of reference iMessage videos.
  */
 function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings, platform, theme, avatarImg) {
-  // 1. Background (Pure Chroma Key Green #00FF00)
+  // 1. Background (Pure Chroma Key Green #00FF00 or Dark)
   const gameplay = settings.gameplay || 'greenscreen';
   if (gameplay === 'greenscreen') {
     ctx.fillStyle = '#00FF00';
@@ -217,7 +218,7 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
   }
   ctx.fillRect(0, 0, W, H);
 
-  // 2. Determine Active Page and Visible Messages
+  // 2. Determine Active Page and Visible Messages on that Page
   let activePageIndex = 0;
   for (let i = 0; i < timeline.length; i++) {
     if (elapsed >= timeline[i].startTime) {
@@ -225,28 +226,38 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
     }
   }
 
+  // All messages on the active page that have appeared so far
   const pageMessages = timeline.filter(t => t.pageIndex === activePageIndex && elapsed >= t.startTime);
+  if (pageMessages.length === 0) return;
 
-  // 3. Layout Dimensions
+  // 3. Layout Dimensions & Settings
   const containerW = 810;
   const containerX = Math.round((W - containerW) / 2); // 135px
-  const containerY = Math.round(345 * ((settings.chatYPosition || 50) / 50));
-  const isSquareCorners = settings.containerCorners === 'square';
+  const isSquareCorners = settings.containerCorners !== 'rounded';
   const cornerRadius = isSquareCorners ? 0 : 28;
 
-  const headerH = 184;
-  const fontSize = Math.round(36 * ((settings.bubbleScale || 110) / 100));
-  const lineH = Math.round(fontSize * 1.35);
-  const bubblePaddingX = 30;
-  const bubblePaddingY = 18;
-  const bubbleGap = 22;
-  const maxBubbleW = Math.round(containerW * ((settings.maxBubbleWidth || 80) / 100)); // ~640px
+  // Header is shown on Page 1 by default, or all pages if headerPersistent is enabled
+  const showHeader = activePageIndex === 0 || settings.headerPersistent === true;
+  const headerH = showHeader ? 180 : 0;
 
-  // Pre-calculate heights of visible bubbles to determine dynamic container height
-  ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif`;
+  const bubbleScale = (settings.bubbleScale || 110) / 100;
+  const fontSize = Math.round(38 * bubbleScale);
+  const lineH = Math.round(fontSize * 1.32);
+  const bubblePaddingX = 26;
+  const bubblePaddingY = 16;
+  const maxBubbleW = Math.round(containerW * ((settings.maxBubbleWidth || 80) / 100)); // ~648px
 
+  // Set font for text measurement
+  ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif`;
+
+  // 4. Precompute Bubbles Layout with iOS Cluster Rules
   let totalContentH = 0;
-  const computedBubbles = pageMessages.map(item => {
+  const computedBubbles = pageMessages.map((item, idx) => {
+    // Cluster check: Does the next visible message on this page have the SAME speaker?
+    const hasNextSameSpeaker = idx < pageMessages.length - 1 && pageMessages[idx + 1].line.speaker === item.line.speaker;
+    const hasTail = !hasNextSameSpeaker; // Only the last message in a cluster gets a tail
+    const itemGap = hasNextSameSpeaker ? 10 : 22; // Tight 10px spacing inside cluster, 22px between speakers
+
     let bW = 0;
     let bH = 0;
     let lines = [];
@@ -261,20 +272,26 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
         const w = ctx.measureText(cleanL).width;
         if (w > bW) bW = w;
       });
-      bW = Math.min(maxBubbleW, Math.max(120, bW + (bubblePaddingX * 2)));
+      bW = Math.min(maxBubbleW, Math.max(120, Math.round(bW + (bubblePaddingX * 2))));
       bH = Math.round(lines.length * lineH + (bubblePaddingY * 2));
     }
 
-    const res = { item, bW, bH, lines };
-    totalContentH += bH + bubbleGap;
-    return res;
+    const bubbleData = { item, bW, bH, lines, hasTail, itemGap };
+    totalContentH += bH + (idx < pageMessages.length - 1 ? itemGap : 0);
+    return bubbleData;
   });
 
   // Dynamic Container Height
-  const bottomPadding = 26;
-  const containerH = headerH + totalContentH + bottomPadding;
+  const topPadding = showHeader ? 22 : 30;
+  const bottomPadding = 30;
+  const containerH = headerH + topPadding + totalContentH + bottomPadding;
 
-  // 4. Draw White Chat Container Card
+  // Center vertically according to chatYPosition
+  const yPercent = (settings.chatYPosition || 50) / 100;
+  const availableY = H - containerH;
+  const containerY = Math.max(120, Math.round(availableY * yPercent));
+
+  // 5. Draw Floating White Container Card
   const isDark = theme === 'dark';
   ctx.save();
   ctx.fillStyle = isDark ? '#1c1c1e' : '#ffffff';
@@ -287,99 +304,103 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
     ctx.fillRect(containerX, containerY, containerW, containerH);
   }
 
-  // 5. Header
-  const headerY = containerY;
+  // 6. Draw iOS Contact Header (if active for this page)
+  if (showHeader) {
+    const headerY = containerY;
 
-  // Header Background
-  ctx.fillStyle = isDark ? '#1c1c1e' : '#ffffff';
-  ctx.fillRect(containerX, headerY, containerW, headerH);
+    // Left Chevron <
+    ctx.strokeStyle = '#007aff';
+    ctx.lineWidth = 4.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(containerX + 46, headerY + 68);
+    ctx.lineTo(containerX + 34, headerY + 82);
+    ctx.lineTo(containerX + 46, headerY + 96);
+    ctx.stroke();
 
-  // Left Chevron <
-  ctx.strokeStyle = '#007aff';
-  ctx.lineWidth = 4.5;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(containerX + 48, headerY + 70);
-  ctx.lineTo(containerX + 36, headerY + 84);
-  ctx.lineTo(containerX + 48, headerY + 98);
-  ctx.stroke();
+    // Center Avatar Circle
+    const avatarSize = 92;
+    const avatarX = Math.round(W / 2 - avatarSize / 2);
+    const avatarY = headerY + 20;
 
-  // Avatar Circle (Center)
-  const avatarSize = 94;
-  const avatarX = Math.round(W / 2 - avatarSize / 2);
-  const avatarY = headerY + 22;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+    ctx.clip();
+    if (avatarImg) {
+      ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
+    } else {
+      const grad = ctx.createLinearGradient(avatarX, avatarY, avatarX, avatarY + avatarSize);
+      grad.addColorStop(0, '#8E8E93');
+      grad.addColorStop(1, '#636366');
+      ctx.fillStyle = grad;
+      ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 44px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const letterMatch = (scriptData.contactName || 'Natasha').match(/[a-zA-Z0-9]/);
+      const initial = letterMatch ? letterMatch[0].toUpperCase() : ((scriptData.contactName || 'N').trim().slice(0, 1) || 'N');
+      ctx.fillText(initial, avatarX + avatarSize / 2, avatarY + avatarSize / 2);
+    }
+    ctx.restore();
 
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-  ctx.clip();
-  if (avatarImg) {
-    ctx.drawImage(avatarImg, avatarX, avatarY, avatarSize, avatarSize);
-  } else {
-    const grad = ctx.createLinearGradient(avatarX, avatarY, avatarX, avatarY + avatarSize);
-    grad.addColorStop(0, '#8E8E93');
-    grad.addColorStop(1, '#636366');
-    ctx.fillStyle = grad;
-    ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '600 46px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
+    // Contact Name + Small Chevron
+    const nameText = scriptData.contactName || 'Natasha 💖';
+    ctx.fillStyle = isDark ? '#ffffff' : '#000000';
+    ctx.font = '600 26px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const letterMatch = (scriptData.contactName || 'Natasha').match(/[a-zA-Z0-9]/);
-    const initial = letterMatch ? letterMatch[0].toUpperCase() : ((scriptData.contactName || 'N').trim().slice(0, 2) || 'N');
-    ctx.fillText(initial, avatarX + avatarSize / 2, avatarY + avatarSize / 2);
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(nameText, W / 2 - 8, headerY + 152);
+
+    const nameWidth = ctx.measureText(nameText).width;
+    ctx.fillStyle = '#8e8e93';
+    ctx.font = '600 20px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.fillText('>', W / 2 + (nameWidth / 2) + 6, headerY + 150);
+
+    // Right FaceTime Camera Icon
+    const camX = containerX + containerW - 74;
+    const camY = headerY + 68;
+    drawFaceTimeIcon(ctx, camX, camY, '#007aff');
+
+    // Divider Line below Header
+    ctx.strokeStyle = isDark ? '#2c2c2e' : '#e5e5ea';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(containerX, headerY + headerH);
+    ctx.lineTo(containerX + containerW, headerY + headerH);
+    ctx.stroke();
   }
-  ctx.restore();
 
-  // Contact Name + Chevron
-  const nameText = scriptData.contactName || 'Natasha 💖';
-  ctx.fillStyle = isDark ? '#ffffff' : '#000000';
-  ctx.font = '600 27px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillText(nameText, W / 2 - 8, headerY + 154);
+  // 7. Draw Message Bubbles with Authentic Apple iMessage Tails
+  const contentStartY = containerY + headerH + topPadding;
+  let currentBubbleY = contentStartY;
 
-  // Small grey chevron >
-  const nameWidth = ctx.measureText(nameText).width;
-  ctx.fillStyle = '#8e8e93';
-  ctx.font = '600 20px -apple-system, BlinkMacSystemFont, sans-serif';
-  ctx.fillText('>', W / 2 + (nameWidth / 2) + 6, headerY + 152);
-
-  // Right FaceTime Camera Icon
-  const camX = containerX + containerW - 74;
-  const camY = headerY + 68;
-  drawFaceTimeIcon(ctx, camX, camY, '#007aff');
-
-  // Divider Line below header
-  ctx.strokeStyle = isDark ? '#2c2c2e' : '#e5e5ea';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(containerX, headerY + headerH);
-  ctx.lineTo(containerX + containerW, headerY + headerH);
-  ctx.stroke();
-
-  // 6. Draw Message Bubbles with Authentic iMessage Tails
-  let currentBubbleY = headerY + headerH + 24;
-
-  computedBubbles.forEach(({ item, bW, bH, lines }) => {
+  computedBubbles.forEach(({ item, bW, bH, lines, hasTail, itemGap }) => {
     const isSent = item.line.speaker === 2;
     const timeSinceAppear = elapsed - item.startTime;
-    const popProgress = Math.min(1.0, timeSinceAppear * 9); // fast snap-in
-    const bubbleX = isSent ? (containerX + containerW - 36 - bW) : (containerX + 36);
+    const popProgress = Math.min(1.0, timeSinceAppear * 10); // fast crisp pop
+    
+    // Position bubble horizontally inside the white card
+    // Incoming (left): containerX + 38
+    // Outgoing (right): containerX + containerW - 38 - bW
+    const marginSide = 38;
+    const bubbleX = isSent ? (containerX + containerW - marginSide - bW) : (containerX + marginSide);
 
     ctx.save();
 
     // Scale pop-in animation
     if (popProgress < 1.0) {
-      ctx.translate(bubbleX + bW / 2, currentBubbleY + bH / 2);
-      ctx.scale(0.88 + 0.12 * popProgress, 0.88 + 0.12 * popProgress);
-      ctx.translate(-(bubbleX + bW / 2), -(currentBubbleY + bH / 2));
+      const scale = 0.88 + 0.12 * popProgress;
+      ctx.translate(bubbleX + (isSent ? bW : 0), currentBubbleY + bH);
+      ctx.scale(scale, scale);
+      ctx.translate(-(bubbleX + (isSent ? bW : 0)), -(currentBubbleY + bH));
       ctx.globalAlpha = popProgress;
     }
 
     if (item.line.isImage && item.image) {
-      // Draw Attached Image
+      // Draw Image Attachment Bubble
       ctx.save();
       drawRoundRect(ctx, bubbleX, currentBubbleY, bW, bH, 26);
       ctx.clip();
@@ -388,11 +409,11 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
     } else {
       // Draw Authentic iMessage Bubble
       if (isSent) {
-        // Outgoing Blue Bubble (#007aff) with right tail
+        // Outgoing Blue Bubble (#007AFF)
         ctx.fillStyle = '#007aff';
-        drawIosRightBubble(ctx, bubbleX, currentBubbleY, bW, bH, 32);
+        drawIosRightBubble(ctx, bubbleX, currentBubbleY, bW, bH, hasTail, 30);
 
-        // White text
+        // White Text
         ctx.fillStyle = '#ffffff';
         ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif`;
         ctx.textAlign = 'left';
@@ -401,11 +422,11 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
           drawCensoredCanvasLine(ctx, line, bubbleX + bubblePaddingX - 2, currentBubbleY + bubblePaddingY + (idx + 0.82) * lineH, true, isDark, fontSize);
         });
       } else {
-        // Incoming Grey Bubble (#e9e9eb) with left tail
+        // Incoming Grey Bubble (#E9E9EB)
         ctx.fillStyle = isDark ? '#26252a' : '#e9e9eb';
-        drawIosLeftBubble(ctx, bubbleX, currentBubbleY, bW, bH, 32);
+        drawIosLeftBubble(ctx, bubbleX, currentBubbleY, bW, bH, hasTail, 30);
 
-        // Black/White text
+        // Black / White Text
         ctx.fillStyle = isDark ? '#ffffff' : '#000000';
         ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif`;
         ctx.textAlign = 'left';
@@ -417,59 +438,90 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
     }
 
     ctx.restore();
-    currentBubbleY += bH + bubbleGap;
+    currentBubbleY += bH + itemGap;
   });
 
-  ctx.restore(); // Restore Container clip
+  ctx.restore(); // Restore Container clipping
 }
 
-// Authentic iOS Left Bubble with Tail
-function drawIosLeftBubble(ctx, x, y, w, h, r = 32) {
+/**
+ * Authentic Apple iOS Outgoing (Right) Bubble with curved bezier tail
+ */
+function drawIosRightBubble(ctx, x, y, w, h, hasTail = true, r = 30) {
   ctx.beginPath();
   // Top-left
   ctx.moveTo(x + r, y);
-  // Top edge to top-right
+  // Top edge
   ctx.lineTo(x + w - r, y);
+  // Top-right corner
   ctx.arcTo(x + w, y, x + w, y + r, r);
-  // Right edge down to bottom-right
-  ctx.lineTo(x + w, y + h - r);
-  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-  // Bottom edge towards bottom-left
-  ctx.lineTo(x + 22, y + h);
-  // Left tail curve
-  ctx.bezierCurveTo(x + 10, y + h, x - 2, y + h + 2, x - 12, y + h + 2);
-  ctx.bezierCurveTo(x - 2, y + h - 4, x + 2, y + h - 14, x + 2, y + h - 22);
-  // Left edge up to top-left
-  ctx.lineTo(x + 2, y + r);
-  ctx.arcTo(x + 2, y, x + r, y, r);
-  ctx.closePath();
-  ctx.fill();
-}
 
-// Authentic iOS Right Bubble with Tail
-function drawIosRightBubble(ctx, x, y, w, h, r = 32) {
-  ctx.beginPath();
-  // Top-left
-  ctx.moveTo(x + r, y);
-  // Top edge to top-right
-  ctx.lineTo(x + w - r, y);
-  ctx.arcTo(x + w, y, x + w, y + r, r);
-  // Right edge down to tail
-  ctx.lineTo(x + w - 2, y + h - 22);
-  // Right tail curve
-  ctx.bezierCurveTo(x + w - 2, y + h - 14, x + w + 2, y + h - 4, x + w + 12, y + h + 2);
-  ctx.bezierCurveTo(x + w + 2, y + h + 2, x + w - 10, y + h, x + w - 22, y + h);
-  // Bottom edge to bottom-left
-  ctx.lineTo(x + r, y + h);
+  if (hasTail) {
+    // Right wall down towards tail root
+    ctx.lineTo(x + w, y + h - 16);
+    // Outer curve flaring outward to tail point
+    ctx.bezierCurveTo(x + w, y + h - 6, x + w + 5, y + h, x + w + 14, y + h);
+    // Bottom curve under the tail hooking back to bubble bottom edge
+    ctx.bezierCurveTo(x + w + 5, y + h, x + w - 4, y + h, x + w - 16, y + h);
+    // Bottom edge to bottom-left
+    ctx.lineTo(x + r, y + h);
+  } else {
+    // Uniform rounded corner
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+  }
+
+  // Bottom-left corner
   ctx.arcTo(x, y + h, x, y + h - r, r);
-  // Left edge up to top-left
+  // Left wall up
   ctx.lineTo(x, y + r);
+  // Top-left corner
   ctx.arcTo(x, y, x + r, y, r);
   ctx.closePath();
   ctx.fill();
 }
 
-// FaceTime Video Icon
+/**
+ * Authentic Apple iOS Incoming (Left) Bubble with curved bezier tail
+ */
+function drawIosLeftBubble(ctx, x, y, w, h, hasTail = true, r = 30) {
+  ctx.beginPath();
+  // Top-left
+  ctx.moveTo(x + r, y);
+  // Top edge
+  ctx.lineTo(x + w - r, y);
+  // Top-right corner
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  // Right wall down
+  ctx.lineTo(x + w, y + h - r);
+  // Bottom-right corner
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+
+  if (hasTail) {
+    // Bottom edge to tail root
+    ctx.lineTo(x + 16, y + h);
+    // Hook under the tail towards tip
+    ctx.bezierCurveTo(x + 4, y + h, x - 5, y + h, x - 14, y + h);
+    // Outer curve from tail point back up to left wall
+    ctx.bezierCurveTo(x - 5, y + h, x, y + h - 6, x, y + h - 16);
+  } else {
+    // Uniform rounded corner
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+  }
+
+  // Left wall up
+  ctx.lineTo(x, y + r);
+  // Top-left corner
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/**
+ * FaceTime Video Camera Icon
+ */
 function drawFaceTimeIcon(ctx, x, y, color) {
   ctx.strokeStyle = color;
   ctx.lineWidth = 3.5;
@@ -490,7 +542,9 @@ function drawFaceTimeIcon(ctx, x, y, color) {
   ctx.stroke();
 }
 
-// Rounded Rectangle
+/**
+ * Rounded Rectangle
+ */
 function drawRoundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -505,7 +559,9 @@ function drawRoundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-// Word wrapping helper (measures line width excluding censor brackets)
+/**
+ * Word wrapping helper
+ */
 function wrapText(ctx, text, maxWidth) {
   const words = (text || '').split(' ');
   const lines = [];
@@ -526,7 +582,9 @@ function wrapText(ctx, text, maxWidth) {
   return lines;
 }
 
-// Canvas Line Renderer with Gaussian Blur Censor Tape
+/**
+ * Canvas Line Renderer with Gaussian Blur Censor Tape
+ */
 function drawCensoredCanvasLine(ctx, lineText, startX, y, isSent, isDark, fontSize) {
   if (!lineText.includes('{')) {
     ctx.fillText(lineText, startX, y);
@@ -556,7 +614,7 @@ function drawCensoredCanvasLine(ctx, lineText, startX, y, isSent, isDark, fontSi
     if (!part.censored) {
       ctx.fillText(part.text, curX, y);
     } else {
-      // 1. Draw Gaussian Blurred Letters
+      // 1. Draw Blurred Letters
       ctx.save();
       ctx.filter = 'blur(6px)';
       ctx.fillText(part.text, curX, y);
@@ -571,11 +629,11 @@ function drawCensoredCanvasLine(ctx, lineText, startX, y, isSent, isDark, fontSi
       const tapeH = fontSize * 1.08;
 
       ctx.fillStyle = isSent
-        ? 'rgba(255, 255, 255, 0.42)'
+        ? 'rgba(255, 255, 255, 0.45)'
         : (isDark ? 'rgba(255, 255, 255, 0.32)' : 'rgba(0, 0, 0, 0.16)');
       ctx.strokeStyle = isSent
-        ? 'rgba(255, 255, 255, 0.68)'
-        : (isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.25)');
+        ? 'rgba(255, 255, 255, 0.72)'
+        : (isDark ? 'rgba(255, 255, 255, 0.48)' : 'rgba(0, 0, 0, 0.25)');
       ctx.lineWidth = 1.5;
       drawRoundRect(ctx, tapeX, tapeY, tapeW, tapeH, 4);
       ctx.fill();
@@ -585,4 +643,3 @@ function drawCensoredCanvasLine(ctx, lineText, startX, y, isSent, isDark, fontSi
     curX += partW;
   });
 }
-

@@ -393,8 +393,8 @@ export default function App() {
   return (
     <div className={`min-h-screen flex flex-col font-sans transition-colors duration-400 ease-in-out ${
       theme === 'dark'
-        ? 'bg-[#080c16] text-white selection:bg-purple-600'
-        : 'anything-sky-bg text-neutral-900 selection:bg-black'
+        ? 'bg-[#080c14] text-white selection:bg-emerald-500'
+        : 'kree8-studio-bg text-neutral-900 selection:bg-neutral-900 selection:text-white'
     }`}>
       {/* Top Navbar */}
       <TopNavbar credits={207} theme={theme} onThemeChange={setTheme} />
@@ -403,7 +403,7 @@ export default function App() {
       <main className="flex-1 max-w-[1700px] w-full mx-auto p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
         {/* LEFT COLUMN: Project, Script, Uploads, Status (Col 3) */}
-        <section className="lg:col-span-3 anything-card rounded-[28px] p-4 flex flex-col shadow-xl space-y-2">
+        <section className="lg:col-span-3 anything-card rounded-[30px] p-4 flex flex-col shadow-xl space-y-2">
           {/* React Bits JellyRadio for Left Sidebar Navigation */}
           <div className="flex justify-center pb-3 mb-2 border-b border-neutral-200/70">
             <JellyRadio
@@ -556,7 +556,7 @@ export default function App() {
         </section>
 
         {/* RIGHT COLUMN: Settings, Voices, Bubble Design, Video, Actions (Col 3) */}
-        <section className="lg:col-span-3 anything-card rounded-[28px] p-4 shadow-xl">
+        <section className="lg:col-span-3 anything-card rounded-[30px] p-4 shadow-xl">
           <RightSidebar
             platform={platform}
             onPlatformChange={setPlatform}
