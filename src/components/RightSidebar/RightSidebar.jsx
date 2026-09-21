@@ -608,6 +608,23 @@ export default function RightSidebar({
                 </select>
               </div>
             </div>
+
+            {/* Output Render Engine / Process */}
+            <div className="space-y-1.5 pt-1">
+              <label className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block">
+                RENDER ENGINE
+              </label>
+              <div className="relative">
+                <select
+                  value={settings.renderEngine || 'botyk'}
+                  onChange={(e) => onSettingChange('renderEngine', e.target.value)}
+                  className="w-full anything-input rounded-xl px-3.5 py-2 text-xs text-neutral-900 font-medium focus:outline-none cursor-pointer bg-white border border-neutral-200 shadow-sm"
+                >
+                  <option value="botyk" className="bg-white text-neutral-900">Botyk Engine (60 FPS Cloud MP4)</option>
+                  <option value="local" className="bg-white text-neutral-900">Tex8 Canvas Engine (In-Browser 60 FPS)</option>
+                </select>
+              </div>
+            </div>
           </div>
         )}
       </div>

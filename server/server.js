@@ -301,8 +301,150 @@ app.post('/api/render-video', upload.single('videoBlob'), async (req, res) => {
   return res.status(400).json({ error: 'No video recording data received' });
 });
 
+// ---------------- BOTYK ENGINE PROXY ROUTES ---------------- //
+const BOTYK_COOKIE = process.env.BOTYK_COOKIE || 'imsg_session=6C6W-K6LD-JRVV-QGTM';
+
+// 8. Botyk User Info & Credits
+app.get('/api/botyk/me', async (req, res) => {
+  try {
+    const resp = await fetch('https://botyk.app/me', {
+      headers: { 'Cookie': BOTYK_COOKIE }
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 9. Botyk Preview Frame
+app.post('/api/botyk/preview/:page', async (req, res) => {
+  try {
+    const resp = await fetch(`https://botyk.app/preview/${req.params.page}`, {
+      method: 'POST',
+      headers: {
+        'Cookie': BOTYK_COOKIE,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(req.body)
+    });
+    if (!resp.ok) {
+      const err = await resp.text();
+      return res.status(resp.status).send(err);
+    }
+    res.setHeader('Content-Type', resp.headers.get('content-type') || 'image/jpeg');
+    const totalPages = resp.headers.get('X-Total-Pages');
+    if (totalPages) res.setHeader('X-Total-Pages', totalPages);
+    const arrayBuf = await resp.arrayBuffer();
+    res.send(Buffer.from(arrayBuf));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 10. Botyk Generate Audio
+app.post('/api/botyk/generate_audio', async (req, res) => {
+  try {
+    const resp = await fetch('https://botyk.app/api/generate_audio', {
+      method: 'POST',
+      headers: {
+        'Cookie': BOTYK_COOKIE,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(req.body)
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 11. Botyk Audio Progress
+app.get('/api/botyk/audio_progress', async (req, res) => {
+  try {
+    const resp = await fetch('https://botyk.app/api/audio_progress', {
+      headers: { 'Cookie': BOTYK_COOKIE }
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 12. Botyk Generate Video
+app.post('/api/botyk/generate_video', async (req, res) => {
+  try {
+    const resp = await fetch('https://botyk.app/api/generate_video', {
+      method: 'POST',
+      headers: {
+        'Cookie': BOTYK_COOKIE,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(req.body)
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 13. Botyk Video Progress
+app.get('/api/botyk/video_progress', async (req, res) => {
+  try {
+    const resp = await fetch('https://botyk.app/api/video_progress', {
+      headers: { 'Cookie': BOTYK_COOKIE }
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 14. Botyk Download Video
+app.get('/api/botyk/download/:token', async (req, res) => {
+  try {
+    const token = req.params.token;
+    const localFile = path.join(exportsDir, `botyk_${token}.mp4`);
+    if (fs.existsSync(localFile)) {
+      return res.sendFile(localFile);
+    }
+    const resp = await fetch(`https://botyk.app/download/${token}`, {
+      headers: { 'Cookie': BOTYK_COOKIE }
+    });
+    if (!resp.ok) {
+      return res.status(resp.status).json({ error: 'Failed to download video from Botyk' });
+    }
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Content-Disposition', `attachment; filename="botyk_video_${token}.mp4"`);
+    const arrayBuf = await resp.arrayBuffer();
+    const buf = Buffer.from(arrayBuf);
+    fs.writeFileSync(localFile, buf);
+    res.send(buf);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 15. Botyk Last Video
+app.get('/api/botyk/last_video', async (req, res) => {
+  try {
+    const resp = await fetch('https://botyk.app/api/last_video', {
+      headers: { 'Cookie': BOTYK_COOKIE }
+    });
+    const data = await resp.json();
+    res.status(resp.status).json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`[Backend Server] Running on http://localhost:${PORT}`);
   console.log(`[Backend Server] FFmpeg Path: ${getFfmpegPath()}`);
 });
+

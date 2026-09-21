@@ -230,33 +230,35 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
   const pageMessages = timeline.filter(t => t.pageIndex === activePageIndex && elapsed >= t.startTime);
   if (pageMessages.length === 0) return;
 
-  // 3. Layout Dimensions & Settings
-  const containerW = 810;
-  const containerX = Math.round((W - containerW) / 2); // 135px
-  const isSquareCorners = settings.containerCorners !== 'rounded';
-  const cornerRadius = isSquareCorners ? 0 : 28;
+  // 3. Layout Dimensions & Settings (Exact Botyk.app Geometry)
+  const containerW = 808;
+  const containerX = Math.round((W - containerW) / 2); // 136px
+  const isSquareCorners = settings.containerCorners === 'square';
+  const cornerRadius = isSquareCorners ? 0 : 35; // Botyk corner_radius: 35
 
   // Header is shown on Page 1 by default, or all pages if headerPersistent is enabled
   const showHeader = activePageIndex === 0 || settings.headerPersistent === true;
-  const headerH = showHeader ? 180 : 0;
+  const headerH = showHeader ? 182 : 0; // Botyk header height: 182px
 
-  const bubbleScale = (settings.bubbleScale || 110) / 100;
-  const fontSize = Math.round(38 * bubbleScale);
-  const lineH = Math.round(fontSize * 1.32);
-  const bubblePaddingX = 26;
-  const bubblePaddingY = 16;
-  const maxBubbleW = Math.round(containerW * ((settings.maxBubbleWidth || 80) / 100)); // ~648px
+  const bubbleScale = (settings.bubbleScale || 120) / 115;
+  const fontSize = Math.round(46 * bubbleScale); // Botyk font_size: Math.round(46 * scale / 115) (~48-53px)
+  const lineSpacing = 6;
+  const lineH = Math.round(fontSize * 1.2) + lineSpacing;
+  const bubblePaddingX = 26; // Botyk padding_h: 26
+  const bubblePaddingY = 18; // Botyk padding_v: 18
+  const maxBubbleW = Math.round(containerW * ((settings.maxBubbleWidth || 70) / 100)); // Botyk bubble_max_pct: 70% (~565px)
+  const minBubbleW = 120; // Botyk min_bubble_w: 120
 
   // Set font for text measurement
   ctx.font = `400 ${fontSize}px -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", Arial, sans-serif`;
 
-  // 4. Precompute Bubbles Layout with iOS Cluster Rules
+  // 4. Precompute Bubbles Layout with Botyk iOS Cluster Rules
   let totalContentH = 0;
   const computedBubbles = pageMessages.map((item, idx) => {
     // Cluster check: Does the next visible message on this page have the SAME speaker?
     const hasNextSameSpeaker = idx < pageMessages.length - 1 && pageMessages[idx + 1].line.speaker === item.line.speaker;
     const hasTail = !hasNextSameSpeaker; // Only the last message in a cluster gets a tail
-    const itemGap = hasNextSameSpeaker ? 10 : 22; // Tight 10px spacing inside cluster, 22px between speakers
+    const itemGap = hasNextSameSpeaker ? 10 : 16; // Botyk bubble_gap: 16px between clusters, 10px inside
 
     let bW = 0;
     let bH = 0;
@@ -272,8 +274,8 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
         const w = ctx.measureText(cleanL).width;
         if (w > bW) bW = w;
       });
-      bW = Math.min(maxBubbleW, Math.max(120, Math.round(bW + (bubblePaddingX * 2))));
-      bH = Math.round(lines.length * lineH + (bubblePaddingY * 2));
+      bW = Math.min(maxBubbleW, Math.max(minBubbleW, Math.round(bW + (bubblePaddingX * 2))));
+      bH = Math.round(lines.length * lineH + (bubblePaddingY * 2) - 4);
     }
 
     const bubbleData = { item, bW, bH, lines, hasTail, itemGap };
@@ -282,14 +284,14 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
   });
 
   // Dynamic Container Height
-  const topPadding = showHeader ? 22 : 30;
-  const bottomPadding = 30;
+  const topPadding = showHeader ? 35 : 35; // Botyk chat_top_pad: 35
+  const bottomPadding = 35;
   const containerH = headerH + topPadding + totalContentH + bottomPadding;
 
-  // Center vertically according to chatYPosition
-  const yPercent = (settings.chatYPosition || 50) / 100;
-  const availableY = H - containerH;
-  const containerY = Math.max(120, Math.round(availableY * yPercent));
+  // Position container matching Botyk chat_y (default 350)
+  const containerY = settings.chatYPosition !== undefined
+    ? Math.round((settings.chatYPosition / 100) * (H - containerH))
+    : 350;
 
   // 5. Draw Floating White Container Card
   const isDark = theme === 'dark';
@@ -411,7 +413,7 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
       if (isSent) {
         // Outgoing Blue Bubble (#007AFF)
         ctx.fillStyle = '#007aff';
-        drawIosRightBubble(ctx, bubbleX, currentBubbleY, bW, bH, hasTail, 30);
+        drawIosRightBubble(ctx, bubbleX, currentBubbleY, bW, bH, hasTail, 35);
 
         // White Text
         ctx.fillStyle = '#ffffff';
@@ -424,7 +426,7 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
       } else {
         // Incoming Grey Bubble (#E9E9EB)
         ctx.fillStyle = isDark ? '#26252a' : '#e9e9eb';
-        drawIosLeftBubble(ctx, bubbleX, currentBubbleY, bW, bH, hasTail, 30);
+        drawIosLeftBubble(ctx, bubbleX, currentBubbleY, bW, bH, hasTail, 35);
 
         // Black / White Text
         ctx.fillStyle = isDark ? '#ffffff' : '#000000';
@@ -447,7 +449,7 @@ function renderReferenceFrame(ctx, W, H, elapsed, timeline, scriptData, settings
 /**
  * Authentic Apple iOS Outgoing (Right) Bubble with curved bezier tail
  */
-function drawIosRightBubble(ctx, x, y, w, h, hasTail = true, r = 30) {
+function drawIosRightBubble(ctx, x, y, w, h, hasTail = true, r = 35) {
   ctx.beginPath();
   // Top-left
   ctx.moveTo(x + r, y);
@@ -458,11 +460,11 @@ function drawIosRightBubble(ctx, x, y, w, h, hasTail = true, r = 30) {
 
   if (hasTail) {
     // Right wall down towards tail root
-    ctx.lineTo(x + w, y + h - 16);
+    ctx.lineTo(x + w, y + h - 18);
     // Outer curve flaring outward to tail point
-    ctx.bezierCurveTo(x + w, y + h - 6, x + w + 5, y + h, x + w + 14, y + h);
+    ctx.bezierCurveTo(x + w, y + h - 6, x + w + 6, y + h, x + w + 16, y + h);
     // Bottom curve under the tail hooking back to bubble bottom edge
-    ctx.bezierCurveTo(x + w + 5, y + h, x + w - 4, y + h, x + w - 16, y + h);
+    ctx.bezierCurveTo(x + w + 5, y + h, x + w - 4, y + h, x + w - 18, y + h);
     // Bottom edge to bottom-left
     ctx.lineTo(x + r, y + h);
   } else {
@@ -485,7 +487,7 @@ function drawIosRightBubble(ctx, x, y, w, h, hasTail = true, r = 30) {
 /**
  * Authentic Apple iOS Incoming (Left) Bubble with curved bezier tail
  */
-function drawIosLeftBubble(ctx, x, y, w, h, hasTail = true, r = 30) {
+function drawIosLeftBubble(ctx, x, y, w, h, hasTail = true, r = 35) {
   ctx.beginPath();
   // Top-left
   ctx.moveTo(x + r, y);
@@ -500,11 +502,11 @@ function drawIosLeftBubble(ctx, x, y, w, h, hasTail = true, r = 30) {
 
   if (hasTail) {
     // Bottom edge to tail root
-    ctx.lineTo(x + 16, y + h);
+    ctx.lineTo(x + 18, y + h);
     // Hook under the tail towards tip
-    ctx.bezierCurveTo(x + 4, y + h, x - 5, y + h, x - 14, y + h);
+    ctx.bezierCurveTo(x + 4, y + h, x - 5, y + h, x - 16, y + h);
     // Outer curve from tail point back up to left wall
-    ctx.bezierCurveTo(x - 5, y + h, x, y + h - 6, x, y + h - 16);
+    ctx.bezierCurveTo(x - 6, y + h, x, y + h - 6, x, y + h - 18);
   } else {
     // Uniform rounded corner
     ctx.lineTo(x + r, y + h);

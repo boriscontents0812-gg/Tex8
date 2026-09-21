@@ -44,14 +44,16 @@ export default function App() {
   const [platform, setPlatform] = useState('ios');
   const [theme, setTheme] = useState('light');
   const [activeTab, setActiveTab] = useState('preview');
+  const [userCredits, setUserCredits] = useState(143);
   const [settings, setSettings] = useState({
+    renderEngine: 'botyk',
     chatYPosition: 50,
     containerSize: 100,
-    bubbleScale: 110,
-    maxBubbleWidth: 80,
-    messagesPerPage: 4,
-    avatarSize: 40,
-    containerCorners: 'square',
+    bubbleScale: 120,
+    maxBubbleWidth: 70,
+    messagesPerPage: 5,
+    avatarSize: 42,
+    containerCorners: 'rounded',
     animation: 'crop',
     fadeBetweenGroups: false,
     notificationSound: true,
@@ -117,6 +119,19 @@ export default function App() {
   const addLog = (msg) => {
     setLogs(prev => [...prev, msg]);
   };
+
+  // Connect to Botyk Account & check credits
+  useEffect(() => {
+    fetch('/api/botyk/me')
+      .then(r => r.json())
+      .then(data => {
+        if (data && typeof data.credits_remaining === 'number') {
+          setUserCredits(data.credits_remaining);
+          addLog(`Connected to Botyk Account: ${data.discord_name} (${data.credits_remaining} credits available)`);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // 1. Initial Data Fetch
   useEffect(() => {
@@ -322,56 +337,154 @@ export default function App() {
     }
   };
 
-  // Generate Video
+  // Local In-Browser 1080x1920 60 FPS Canvas Render (matching Botyk Geometry)
+  const handleGenerateVideoLocal = async () => {
+    addLog('Building video with Tex8 Canvas Engine (1080x1920 60 FPS)...');
+
+    // 1. Ensure audio clips exist
+    let currentClips = audioClips;
+    if (!currentClips || currentClips.length === 0) {
+      addLog('No audio clips found. Auto-generating audio voiceovers first...');
+      const audioRes = await fetch('/api/tts/generate-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lines: parsedScript.lines,
+          apiKey: currentApiKey,
+          defaultVoice1: settings.voice1,
+          defaultVoice2: settings.voice2,
+          speed: settings.audioSpeed,
+          stability: settings.stability,
+          similarityBoost: settings.similarityBoost
+        })
+      });
+      const audioData = await audioRes.json();
+      if (audioData.success) {
+        currentClips = audioData.clips;
+        setAudioClips(currentClips);
+      }
+    }
+
+    // 2. Render and record
+    const result = await renderAndRecordVideo({
+      scriptData: {
+        ...parsedScript,
+        unreadBadge
+      },
+      audioClips: currentClips,
+      settings,
+      platform,
+      theme,
+      contactPhotos,
+      scriptImages,
+      onProgress: (statusText) => {
+        addLog(statusText);
+      }
+    });
+
+    setVideoResult(result);
+    setActiveTab('video');
+    addLog(`Video ready! Download link available.`);
+  };
+
+  // Botyk Cloud Server Render (60 FPS 1080x1920 MP4)
+  const handleGenerateVideoBotyk = async () => {
+    addLog('Connecting to Botyk Engine for 1080x1920 60 FPS MP4 output...');
+    const botykSettings = {
+      style: platform || 'ios',
+      theme: theme === 'dark' ? 'dark' : 'light',
+      bubble_scale: settings.bubbleScale || 120,
+      font_size: Math.round(46 * (settings.bubbleScale || 120) / 115),
+      bubble_max_pct: settings.maxBubbleWidth || 70,
+      min_bubble_w: 120,
+      bubble_gap: 16,
+      line_spacing: 6,
+      padding_h: 26,
+      padding_v: 18,
+      msgs_per_page: settings.messagesPerPage || 5,
+      chat_y: 350,
+      container_scale: (settings.containerSize || 100) / 100,
+      chat_top_pad: 35,
+      header_name_size: 42,
+      header_name_x: 15,
+      header_name_y: 33,
+      bubble_fade: settings.sentBubbleFade || false,
+      bubble_fade_intensity: 60,
+      group_fade: settings.fadeBetweenGroups || false,
+      notif_sound: settings.notificationSound !== false,
+      header_persistent: settings.headerPersistent || false,
+      header_gradient: settings.headerGradient || false,
+      end_fade_out: settings.endFadeOut || false,
+      container_shadow: settings.containerShadow !== false,
+      use_popin: settings.popInEffect !== false,
+      music_fade_out: false,
+      badge_count: unreadBadge || 0,
+      corner_radius: settings.containerCorners === 'square' ? 0 : 35,
+      bg_sound_volume: 0
+    };
+
+    const payload = {
+      settings: botykSettings,
+      project: currentProject?.name || 'Promo',
+      animation_mode: settings.animation === 'slide' ? 'slide' : 'crop',
+      rounded_corners: settings.containerCorners !== 'square',
+      corner_radius: settings.containerCorners === 'square' ? 0 : 35,
+      group_fade: settings.fadeBetweenGroups || false,
+      notif_sound: settings.notificationSound !== false,
+      header_persistent: settings.headerPersistent || false,
+      end_fade_out: settings.endFadeOut || false,
+      container_shadow: settings.containerShadow !== false,
+      music_fade_out: false,
+      use_popin: settings.popInEffect !== false,
+      container_scale: (settings.containerSize || 100) / 100,
+      speed_factor: settings.audioSpeed || 1.0,
+      badge_count: unreadBadge || 0,
+      bg_sound_file: '',
+      bg_sound_start: '0:00',
+      bg_sound_volume: 0,
+      gameplay_on: settings.gameplay !== 'greenscreen' && settings.gameplay !== 'dark',
+      gameplay_file: '',
+      gameplay_start: '0:00'
+    };
+
+    addLog('Submitting render job to Botyk engine...');
+    const genRes = await fetch('/api/botyk/generate_video', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const genData = await genRes.json();
+    if (!genRes.ok || !genData.download_url) {
+      throw new Error(genData.detail || genData.error || 'Botyk render request failed');
+    }
+
+    addLog(`Video rendered! Duration: ${genData.duration_s?.toFixed(1) || ''}s`);
+    const downloadUrl = `/api/botyk/download/${genData.token}`;
+    setVideoResult({
+      videoUrl: downloadUrl,
+      downloadUrl,
+      filename: `imessage_video - ${genData.token}.mp4`,
+      duration: genData.duration_s
+    });
+    setActiveTab('video');
+    addLog(`Video ready! Download link available.`);
+  };
+
+  // Main Generate Video dispatcher
   const handleGenerateVideo = async () => {
     setIsGeneratingVideo(true);
-    addLog('Building video - Encoding with FFmpeg: preparing canvas and audio...');
-
     try {
-      // 1. Ensure audio clips exist
-      let currentClips = audioClips;
-      if (!currentClips || currentClips.length === 0) {
-        addLog('No audio clips found. Auto-generating audio voiceovers first...');
-        const audioRes = await fetch('/api/tts/generate-all', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            lines: parsedScript.lines,
-            apiKey: currentApiKey,
-            defaultVoice1: settings.voice1,
-            defaultVoice2: settings.voice2,
-            speed: settings.audioSpeed,
-            stability: settings.stability,
-            similarityBoost: settings.similarityBoost
-          })
-        });
-        const audioData = await audioRes.json();
-        if (audioData.success) {
-          currentClips = audioData.clips;
-          setAudioClips(currentClips);
+      if (settings.renderEngine === 'botyk') {
+        try {
+          await handleGenerateVideoBotyk();
+        } catch (botykErr) {
+          addLog(`Botyk server error: ${botykErr.message}. Falling back to local engine...`);
+          await handleGenerateVideoLocal();
         }
+      } else {
+        await handleGenerateVideoLocal();
       }
-
-      // 2. Render and record
-      const result = await renderAndRecordVideo({
-        scriptData: {
-          ...parsedScript,
-          unreadBadge
-        },
-        audioClips: currentClips,
-        settings,
-        platform,
-        theme,
-        contactPhotos,
-        scriptImages,
-        onProgress: (statusText) => {
-          addLog(statusText);
-        }
-      });
-
-      setVideoResult(result);
-      setActiveTab('video');
-      addLog(`Video ready! Download link available.`);
     } catch (err) {
       addLog(`Video building error: ${err.message}`);
       alert(`Video rendering failed: ${err.message}`);
@@ -397,7 +510,7 @@ export default function App() {
         : 'kree8-studio-bg text-neutral-900 selection:bg-neutral-900 selection:text-white'
     }`}>
       {/* Top Navbar */}
-      <TopNavbar credits={207} theme={theme} onThemeChange={setTheme} />
+      <TopNavbar credits={userCredits} theme={theme} onThemeChange={setTheme} />
 
       {/* Main 3-Column Studio Layout */}
       <main className="flex-1 max-w-[1700px] w-full mx-auto p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
